@@ -1,0 +1,53 @@
+# MarketPlace Configuration
+# Author: Fl1uxxNoob
+
+# Database Configuration
+database:
+  type: "mongodb"  # Currently only mongodb is supported
+  mongodb:
+    host: "localhost"
+    port: 27017
+    database: "marketplace"
+    username: ""
+    password: ""
+    connection-string: ""  # Optional: Use connection string instead of individual settings
+    
+# Discord Webhook Configuration
+discord:
+  enabled: true
+  webhook-url: "https://discord.com/api/webhooks/YOUR_WEBHOOK_URL"
+  embeds:
+    enabled: true
+    color: 3447003  # Blue color (0x34A853 in hex)
+    title: "MarketPlace Transaction"
+    footer: "MarketPlace Plugin"
+    thumbnail: "https://via.placeholder.com/128x128.png?text=MP"
+  messages:
+    purchase: "**{player}** purchased **{item}** for **${price}** from **{seller}**"
+    blackmarket-purchase: "**{player}** purchased **{item}** for **${price}** from **{seller}** on the Black Market"
+
+# Black Market Configuration
+blackmarket:
+  refresh-interval: 86400  # 24 hours in seconds
+  max-items: 27  # Maximum items in black market
+  discount-percentage: 50  # 50% discount
+  seller-multiplier: 2.0  # 2x profit for seller
+  auto-refresh: true
+
+# Economy Configuration
+economy:
+  currency-symbol: "$"
+  decimal-places: 2
+
+# General Settings
+general:
+  max-listings-per-player: 10
+  listing-duration: 604800  # 7 days in seconds
+  auto-remove-expired: true
+  confirmation-gui: true
+  
+# Debug Settings
+debug:
+  enabled: false
+  log-database-queries: false
+  log-transactions: true

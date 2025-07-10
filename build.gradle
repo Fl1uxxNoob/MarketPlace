@@ -1,0 +1,37 @@
+plugins {
+    id 'java'
+    id 'com.github.johnrengelman.shadow' version '8.1.1' // Shadow plugin per shading (equivalente a maven-shade)
+}
+
+group = 'net.fliuxx'
+version = '1.0.0'
+
+sourceCompatibility = '17'
+targetCompatibility = '17'
+
+repositories {
+    mavenCentral()
+    maven {
+        name = "spigot-repo"
+        url = "https://hub.spigotmc.org/nexus/content/repositories/snapshots/"
+    }
+    maven {
+        name = "jitpack.io"
+        url = "https://jitpack.io"
+    }
+}
+
+dependencies {
+    compileOnly 'org.spigotmc:spigot-api:1.21.4-R0.1-SNAPSHOT'
+    implementation 'org.mongodb:mongodb-driver-sync:4.10.1'
+    implementation 'org.json:json:20230618'
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
+shadowJar {
+    relocate 'org.mongodb', 'net.fliuxx.marktPlace.libs.mongodb'
+    relocate 'org.json', 'net.fliuxx.marktPlace.libs.json'
+}

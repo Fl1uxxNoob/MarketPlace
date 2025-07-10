@@ -1,0 +1,83 @@
+# MarketPlace Messages Configuration
+# Use {player}, {item}, {price}, {seller}, {buyer} as placeholders
+# Author: Fl1uxxNoob
+
+# General Messages
+prefix: "&8[&6MarketPlace&8]&r "
+no-permission: "&cYou don't have permission to use this command!"
+player-only: "&cThis command can only be used by players!"
+reload-success: "&aConfiguration reloaded successfully!"
+unknown-command: "&cUnknown command. Use /marketplace help for help."
+
+# Economy Messages
+insufficient-funds: "&cYou don't have enough money! Required: &6${price}"
+payment-received: "&aYou received &6${amount} &afrom selling &e{item}&a!"
+payment-sent: "&aYou paid &6${amount} &afor &e{item}&a!"
+
+# Marketplace Messages
+marketplace:
+  title: "&6MarketPlace"
+  empty: "&cThe marketplace is empty!"
+  item-listed: "&aYour &e{item} &ahas been listed for &6${price}&a!"
+  item-sold: "&aYour &e{item} &ahas been sold to &6{buyer} &afor &6${price}&a!"
+  item-purchased: "&aYou purchased &e{item} &afrom &6{seller} &afor &6${price}&a!"
+  item-removed: "&aYour listing for &e{item} &ahas been removed!"
+  max-listings: "&cYou have reached the maximum number of listings ({max})!"
+  invalid-price: "&cInvalid price! Must be a positive number."
+  no-item: "&cYou must be holding an item to sell!"
+  item-exists: "&cThis item is already listed in the marketplace!"
+  item-not-found: "&cItem not found in the marketplace!"
+  cannot-buy-own: "&cYou cannot buy your own items!"
+  
+# Black Market Messages
+blackmarket:
+  title: "&4Black Market"
+  empty: "&cThe black market is empty!"
+  refreshed: "&aBlack market has been refreshed!"
+  auto-refresh: "&6Black market has been automatically refreshed!"
+  next-refresh: "&7Next refresh in: &e{time}"
+  discount-info: "&7All items have &c50% &7discount!"
+  seller-bonus: "&7Sellers get &a2x &7profit!"
+
+# Transaction Messages
+transactions:
+  title: "&9Transaction History"
+  empty: "&cNo transactions found!"
+  bought: "&aBought &e{item} &afrom &6{seller} &afor &6${price}"
+  sold: "&aSold &e{item} &ato &6{buyer} &afor &6${price}"
+  blackmarket-bought: "&aBought &e{item} &afrom &6{seller} &afor &6${price} &c(Black Market)"
+  blackmarket-sold: "&aSold &e{item} &ato &6{buyer} &afor &6${price} &c(Black Market - 2x Profit)"
+
+# Confirmation Messages
+confirmation:
+  title: "&eConfirm Purchase"
+  confirm: "&aConfirm"
+  cancel: "&cCancel"
+  purchase-info: "&7Purchase &e{item} &7for &6${price}&7?"
+  seller-info: "&7Seller: &6{seller}"
+  
+# Error Messages
+errors:
+  database-error: "&cDatabase error occurred! Please contact an administrator."
+  item-serialize-error: "&cError serializing item data!"
+  webhook-error: "&cError sending Discord webhook!"
+  invalid-item: "&cInvalid item data!"
+  expired-listing: "&cThis listing has expired!"
+  
+# GUI Messages
+gui:
+  next-page: "&aNext Page"
+  previous-page: "&aPrevious Page"
+  back: "&cBack"
+  close: "&cClose"
+  refresh: "&eRefresh"
+  page-info: "&7Page {current} of {max}"
+  no-items: "&cNo items to display"
+  
+# Time Format
+time:
+  days: "{days}d"
+  hours: "{hours}h"
+  minutes: "{minutes}m"
+  seconds: "{seconds}s"
+  format: "{days} {hours} {minutes} {seconds}"

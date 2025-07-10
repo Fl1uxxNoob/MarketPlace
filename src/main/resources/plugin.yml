@@ -1,0 +1,69 @@
+name: MarketPlace
+version: 1.0.0
+description: A comprehensive marketplace plugin with MongoDB integration
+author: Fl1uxxNoob
+main: net.fliuxx.marktPlace.MarktPlace
+api-version: '1.21'
+depend: [Vault]
+softdepend: []
+
+commands:
+  marketplace:
+    description: Open the marketplace GUI
+    usage: /marketplace
+    permission: marketplace.view
+    aliases: [market, mp]
+  
+  sell:
+    description: List the item in your hand for sale
+    usage: /sell <price>
+    permission: marketplace.sell
+    aliases: [listsell]
+  
+  blackmarket:
+    description: Open the black market GUI
+    usage: /blackmarket
+    permission: marketplace.blackmarket
+    aliases: [bm, blackm]
+  
+  transactions:
+    description: View your transaction history
+    usage: /transactions
+    permission: marketplace.history
+    aliases: [trans, history]
+  
+  blackmarketrefresh:
+    description: Refresh the black market instantly
+    usage: /blackmarketrefresh
+    permission: marketplace.blackmarket.refresh
+    aliases: [bmrefresh, refreshbm]
+
+permissions:
+  marketplace.*:
+    description: Gives access to all marketplace commands
+    children:
+      marketplace.view: true
+      marketplace.sell: true
+      marketplace.blackmarket: true
+      marketplace.history: true
+      marketplace.blackmarket.refresh: true
+  
+  marketplace.view:
+    description: Allows viewing the marketplace
+    default: true
+  
+  marketplace.sell:
+    description: Allows selling items in the marketplace
+    default: true
+  
+  marketplace.blackmarket:
+    description: Allows access to the black market
+    default: true
+  
+  marketplace.history:
+    description: Allows viewing transaction history
+    default: true
+  
+  marketplace.blackmarket.refresh:
+    description: Allows refreshing the black market
+    default: op

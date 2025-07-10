@@ -1,0 +1,289 @@
+# MarketPlace GUI Configuration
+# Configure all GUI elements here
+# Author: Fl1uxxNoob
+
+# Marketplace GUI Configuration
+marketplace:
+  title: "&6MarketPlace - Page {page}"
+  rows: 6
+  items:
+    # Navigation items
+    next-page:
+      slot: 53
+      material: ARROW
+      name: "&aNext Page"
+      lore:
+        - "&7Click to go to the next page"
+      custom-model-data: 0
+      glow: false
+    
+    previous-page:
+      slot: 45
+      material: ARROW
+      name: "&aPrevious Page"
+      lore:
+        - "&7Click to go to the previous page"
+      custom-model-data: 0
+      glow: false
+    
+    close:
+      slot: 49
+      material: BARRIER
+      name: "&cClose"
+      lore:
+        - "&7Click to close the marketplace"
+      custom-model-data: 0
+      glow: false
+    
+    refresh:
+      slot: 47
+      material: EMERALD
+      name: "&eRefresh"
+      lore:
+        - "&7Click to refresh the marketplace"
+      custom-model-data: 0
+      glow: false
+    
+    page-info:
+      slot: 51
+      material: BOOK
+      name: "&7Page Information"
+      lore:
+        - "&7Current: &e{current}"
+        - "&7Total: &e{total}"
+      custom-model-data: 0
+      glow: false
+    
+    # Filler items
+    filler:
+      enabled: true
+      material: GRAY_STAINED_GLASS_PANE
+      name: " "
+      slots: [46, 48, 50, 52]
+  
+  # Item display configuration
+  item-display:
+    name: "&e{item-name}"
+    lore:
+      - "&7Price: &6${price}"
+      - "&7Seller: &6{seller}"
+      - "&7Listed: &e{time-ago}"
+      - ""
+      - "&aClick to purchase!"
+    glow: false
+
+# Black Market GUI Configuration
+blackmarket:
+  title: "&4Black Market - Page {page}"
+  rows: 6
+  items:
+    # Navigation items (same as marketplace)
+    next-page:
+      slot: 53
+      material: ARROW
+      name: "&aNext Page"
+      lore:
+        - "&7Click to go to the next page"
+      custom-model-data: 0
+      glow: false
+    
+    previous-page:
+      slot: 45
+      material: ARROW
+      name: "&aPrevious Page"
+      lore:
+        - "&7Click to go to the previous page"
+      custom-model-data: 0
+      glow: false
+    
+    close:
+      slot: 49
+      material: BARRIER
+      name: "&cClose"
+      lore:
+        - "&7Click to close the black market"
+      custom-model-data: 0
+      glow: false
+    
+    refresh:
+      slot: 47
+      material: NETHER_STAR
+      name: "&eRefresh Black Market"
+      lore:
+        - "&7Click to refresh the black market"
+        - "&cRequires permission!"
+      custom-model-data: 0
+      glow: true
+    
+    page-info:
+      slot: 51
+      material: BOOK
+      name: "&7Page Information"
+      lore:
+        - "&7Current: &e{current}"
+        - "&7Total: &e{total}"
+      custom-model-data: 0
+      glow: false
+    
+    info:
+      slot: 46
+      material: REDSTONE
+      name: "&4Black Market Info"
+      lore:
+        - "&750% &7discount on all items!"
+        - "&7Sellers get &a2x &7profit!"
+        - "&7Refreshes every &e24 hours"
+        - "&7Next refresh: &e{next-refresh}"
+      custom-model-data: 0
+      glow: false
+    
+    # Filler items
+    filler:
+      enabled: true
+      material: RED_STAINED_GLASS_PANE
+      name: " "
+      slots: [48, 50, 52]
+  
+  # Item display configuration
+  item-display:
+    name: "&e{item-name} &c(50% OFF!)"
+    lore:
+      - "&7Original Price: &6${original-price}"
+      - "&7Sale Price: &c${price}"
+      - "&7Seller: &6{seller}"
+      - "&7Listed: &e{time-ago}"
+      - ""
+      - "&cLimited time offer!"
+      - "&aClick to purchase!"
+    glow: true
+
+# Transaction History GUI Configuration
+transactions:
+  title: "&9Transaction History - Page {page}"
+  rows: 6
+  items:
+    # Navigation items
+    next-page:
+      slot: 53
+      material: ARROW
+      name: "&aNext Page"
+      lore:
+        - "&7Click to go to the next page"
+      custom-model-data: 0
+      glow: false
+    
+    previous-page:
+      slot: 45
+      material: ARROW
+      name: "&aPrevious Page"
+      lore:
+        - "&7Click to go to the previous page"
+      custom-model-data: 0
+      glow: false
+    
+    close:
+      slot: 49
+      material: BARRIER
+      name: "&cClose"
+      lore:
+        - "&7Click to close transaction history"
+      custom-model-data: 0
+      glow: false
+    
+    page-info:
+      slot: 51
+      material: BOOK
+      name: "&7Page Information"
+      lore:
+        - "&7Current: &e{current}"
+        - "&7Total: &e{total}"
+      custom-model-data: 0
+      glow: false
+    
+    # Filler items
+    filler:
+      enabled: true
+      material: BLUE_STAINED_GLASS_PANE
+      name: " "
+      slots: [46, 47, 48, 50, 52]
+  
+  # Transaction display configuration
+  transaction-display:
+    bought:
+      material: EMERALD
+      name: "&aPurchased: &e{item-name}"
+      lore:
+        - "&7Price: &6${price}"
+        - "&7Seller: &6{seller}"
+        - "&7Date: &e{date}"
+        - "&7Type: &aPurchase"
+    
+    sold:
+      material: GOLD_INGOT
+      name: "&eSold: &e{item-name}"
+      lore:
+        - "&7Price: &6${price}"
+        - "&7Buyer: &6{buyer}"
+        - "&7Date: &e{date}"
+        - "&7Type: &eSale"
+    
+    blackmarket-bought:
+      material: EMERALD
+      name: "&aPurchased: &e{item-name} &c(Black Market)"
+      lore:
+        - "&7Price: &6${price}"
+        - "&7Seller: &6{seller}"
+        - "&7Date: &e{date}"
+        - "&7Type: &cBlack Market Purchase"
+    
+    blackmarket-sold:
+      material: DIAMOND
+      name: "&eSold: &e{item-name} &c(Black Market - 2x Profit)"
+      lore:
+        - "&7Price: &6${price}"
+        - "&7Buyer: &6{buyer}"
+        - "&7Date: &e{date}"
+        - "&7Type: &cBlack Market Sale"
+
+# Confirmation GUI Configuration
+confirmation:
+  title: "&eConfirm Purchase"
+  rows: 3
+  items:
+    confirm:
+      slot: 11
+      material: EMERALD_BLOCK
+      name: "&aConfirm Purchase"
+      lore:
+        - "&7Click to confirm the purchase"
+      custom-model-data: 0
+      glow: true
+    
+    cancel:
+      slot: 15
+      material: REDSTONE_BLOCK
+      name: "&cCancel"
+      lore:
+        - "&7Click to cancel the purchase"
+      custom-model-data: 0
+      glow: false
+    
+    item-info:
+      slot: 13
+      # Material will be the actual item
+      name: "&eItem Information"
+      lore:
+        - "&7Item: &e{item-name}"
+        - "&7Price: &6${price}"
+        - "&7Seller: &6{seller}"
+        - ""
+        - "&7Are you sure you want to purchase this item?"
+      custom-model-data: 0
+      glow: false
+    
+    # Filler items
+    filler:
+      enabled: true
+      material: GRAY_STAINED_GLASS_PANE
+      name: " "
+      slots: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26]
