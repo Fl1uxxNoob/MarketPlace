@@ -1,6 +1,5 @@
 # MarketPlace GUI Configuration
 # Configure all GUI elements here
-# Author: Fl1uxxNoob
 
 # Marketplace GUI Configuration
 marketplace:
@@ -35,12 +34,13 @@ marketplace:
       custom-model-data: 0
       glow: false
     
-    refresh:
+    my-items:
       slot: 47
-      material: EMERALD
-      name: "&eRefresh"
+      material: CHEST
+      name: "&6My Items"
       lore:
-        - "&7Click to refresh the marketplace"
+        - "&7Click to view your items"
+        - "&7currently for sale"
       custom-model-data: 0
       glow: false
     
@@ -105,15 +105,15 @@ blackmarket:
       custom-model-data: 0
       glow: false
     
-    refresh:
+    my-items:
       slot: 47
-      material: NETHER_STAR
-      name: "&eRefresh Black Market"
+      material: CHEST
+      name: "&6My Items"
       lore:
-        - "&7Click to refresh the black market"
-        - "&cRequires permission!"
+        - "&7Click to view your items"
+        - "&7currently for sale"
       custom-model-data: 0
-      glow: true
+      glow: false
     
     page-info:
       slot: 51
@@ -287,3 +287,55 @@ confirmation:
       material: GRAY_STAINED_GLASS_PANE
       name: " "
       slots: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26]
+
+# My Items GUI Configuration
+my-items:
+  title: "&6My Items - Page {page}"
+  rows: 6
+  buttons:
+    next-page:
+      slot: 53
+      material: ARROW
+      name: "&aNext Page"
+      lore:
+        - "&7Click to go to the next page"
+    previous-page:
+      slot: 45
+      material: ARROW
+      name: "&aPrevious Page"
+      lore:
+        - "&7Click to go to the previous page"
+    back:
+      slot: 49
+      material: ARROW
+      name: "&eBack to Marketplace"
+      lore:
+        - "&7Click to return to marketplace"
+    close:
+      slot: 48
+      material: BARRIER
+      name: "&cClose"
+      lore:
+        - "&7Click to close"
+  page-info:
+    slot: 50
+    material: BOOK
+    name: "&7Page {current}/{total}"
+    lore:
+      - "&7Regular market: &e{market-items}"
+      - "&7Black market: &e{blackmarket-items}"
+      - "&7Total items: &e{total-items}"
+  item-display:
+    name: "&e{item-name}"
+    lore:
+      - "&7Price: &6${price}"
+      - "&7Market: &6{market-type}"
+      - "&7Listed: &e{time-ago}"
+      - ""
+      - "&7Click to remove from marketplace"
+  items:
+    filler:
+      enabled: true
+      material: GRAY_STAINED_GLASS_PANE
+      name: " "
+      slots: [46, 47, 51, 52]

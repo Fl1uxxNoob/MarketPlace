@@ -5,6 +5,7 @@ import net.fliuxx.marktPlace.database.MongoManager;
 import net.fliuxx.marktPlace.listeners.InventoryListener;
 import net.fliuxx.marktPlace.managers.BlackMarketManager;
 import net.fliuxx.marktPlace.managers.EconomyManager;
+import net.fliuxx.marktPlace.managers.GUIManager;
 import net.fliuxx.marktPlace.utils.ConfigManager;
 import net.fliuxx.marktPlace.utils.DiscordWebhook;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -20,6 +21,7 @@ public class MarktPlace extends JavaPlugin {
     private MongoManager mongoManager;
     private EconomyManager economyManager;
     private BlackMarketManager blackMarketManager;
+    private GUIManager guiManager;
     private ConfigManager configManager;
     private DiscordWebhook discordWebhook;
 
@@ -55,6 +57,9 @@ public class MarktPlace extends JavaPlugin {
         
         // Initialize black market manager
         blackMarketManager = new BlackMarketManager(this);
+        
+        // Initialize GUI manager
+        guiManager = new GUIManager(this);
         
         // Register commands
         registerCommands();
@@ -126,6 +131,10 @@ public class MarktPlace extends JavaPlugin {
 
     public BlackMarketManager getBlackMarketManager() {
         return blackMarketManager;
+    }
+
+    public GUIManager getGUIManager() {
+        return guiManager;
     }
 
     public ConfigManager getConfigManager() {

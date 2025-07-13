@@ -1,6 +1,5 @@
 # MarketPlace Messages Configuration
 # Use {player}, {item}, {price}, {seller}, {buyer} as placeholders
-# Author: Fl1uxxNoob
 
 # General Messages
 prefix: "&8[&6MarketPlace&8]&r "
@@ -54,7 +53,13 @@ confirmation:
   confirm: "&aConfirm"
   cancel: "&cCancel"
   purchase-info: "&7Purchase &e{item} &7for &6${price}&7?"
-  seller-info: "&7Seller: &6{seller}"
+
+# My Items Messages
+my-items:
+  title: "&6My Items"
+  empty: "&cYou have no items for sale!"
+  item-removed: "&aItem removed from marketplace!"
+  item-dropped: "&cYour inventory was full! Item dropped on ground."
   
 # Error Messages
 errors:

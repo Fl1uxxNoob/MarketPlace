@@ -8,6 +8,7 @@ import org.yaml.snakeyaml.external.biz.base64Coder.Base64Coder;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Base64;
 
 /**
  * Item Serializer Utility
@@ -22,10 +23,10 @@ public class ItemSerializer {
         try {
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             BukkitObjectOutputStream dataOutput = new BukkitObjectOutputStream(outputStream);
-            
+
             dataOutput.writeObject(item);
             dataOutput.close();
-            
+
             return Base64Coder.encodeLines(outputStream.toByteArray());
         } catch (IOException e) {
             throw new RuntimeException("Error serializing ItemStack", e);
@@ -39,10 +40,10 @@ public class ItemSerializer {
         try {
             ByteArrayInputStream inputStream = new ByteArrayInputStream(Base64Coder.decodeLines(data));
             BukkitObjectInputStream dataInput = new BukkitObjectInputStream(inputStream);
-            
+
             ItemStack item = (ItemStack) dataInput.readObject();
             dataInput.close();
-            
+
             return item;
         } catch (IOException | ClassNotFoundException e) {
             throw new RuntimeException("Error deserializing ItemStack", e);
@@ -56,13 +57,13 @@ public class ItemSerializer {
         try {
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             BukkitObjectOutputStream dataOutput = new BukkitObjectOutputStream(outputStream);
-            
+
             dataOutput.writeInt(items.length);
             for (ItemStack item : items) {
                 dataOutput.writeObject(item);
             }
             dataOutput.close();
-            
+
             return Base64Coder.encodeLines(outputStream.toByteArray());
         } catch (IOException e) {
             throw new RuntimeException("Error serializing ItemStack array", e);
@@ -76,15 +77,15 @@ public class ItemSerializer {
         try {
             ByteArrayInputStream inputStream = new ByteArrayInputStream(Base64Coder.decodeLines(data));
             BukkitObjectInputStream dataInput = new BukkitObjectInputStream(inputStream);
-            
+
             int length = dataInput.readInt();
             ItemStack[] items = new ItemStack[length];
-            
+
             for (int i = 0; i < length; i++) {
                 items[i] = (ItemStack) dataInput.readObject();
             }
             dataInput.close();
-            
+
             return items;
         } catch (IOException | ClassNotFoundException e) {
             throw new RuntimeException("Error deserializing ItemStack array", e);
@@ -96,16 +97,16 @@ public class ItemSerializer {
      */
     public static String getDisplayName(ItemStack item) {
         if (item == null) return "Unknown Item";
-        
+
         if (item.hasItemMeta() && item.getItemMeta().hasDisplayName()) {
             return item.getItemMeta().getDisplayName();
         }
-        
+
         // Format material name
         String materialName = item.getType().name();
         materialName = materialName.replace("_", " ");
         materialName = capitalizeWords(materialName);
-        
+
         return materialName;
     }
 
@@ -115,7 +116,7 @@ public class ItemSerializer {
     private static String capitalizeWords(String str) {
         String[] words = str.split(" ");
         StringBuilder result = new StringBuilder();
-        
+
         for (String word : words) {
             if (word.length() > 0) {
                 result.append(Character.toUpperCase(word.charAt(0)));
@@ -125,7 +126,7 @@ public class ItemSerializer {
                 result.append(" ");
             }
         }
-        
+
         return result.toString().trim();
     }
 
@@ -150,7 +151,47 @@ public class ItemSerializer {
     public static boolean areItemsEqual(ItemStack item1, ItemStack item2) {
         if (item1 == null && item2 == null) return true;
         if (item1 == null || item2 == null) return false;
-        
+
         return item1.isSimilar(item2) && item1.getAmount() == item2.getAmount();
+    }
+
+    /**
+     * Serialize an ItemStack to a string
+     */
+    public static String serialize(ItemStack item) {
+        if (item == null) {
+            return null;
+        }
+
+        try {
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            BukkitObjectOutputStream dataOutput = new BukkitObjectOutputStream(outputStream);
+            dataOutput.writeObject(item);
+            dataOutput.close();
+            return Base64.getEncoder().encodeToString(outputStream.toByteArray());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    /**
+     * Deserialize a string to an ItemStack
+     */
+    public static ItemStack deserialize(String data) {
+        if (data == null || data.isEmpty()) {
+            return null;
+        }
+
+        try {
+            ByteArrayInputStream inputStream = new ByteArrayInputStream(Base64.getDecoder().decode(data));
+            BukkitObjectInputStream dataInput = new BukkitObjectInputStream(inputStream);
+            ItemStack item = (ItemStack) dataInput.readObject();
+            dataInput.close();
+            return item;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 }

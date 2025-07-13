@@ -7,6 +7,7 @@ import net.fliuxx.marktPlace.database.models.Transaction;
 import net.fliuxx.marktPlace.gui.BlackMarketGUI;
 import net.fliuxx.marktPlace.gui.ConfirmationGUI;
 import net.fliuxx.marktPlace.gui.MarketplaceGUI;
+import net.fliuxx.marktPlace.gui.MyItemsGUI;
 import net.fliuxx.marktPlace.gui.TransactionHistoryGUI;
 import net.fliuxx.marktPlace.utils.ItemSerializer;
 import org.bukkit.Bukkit;
@@ -18,8 +19,6 @@ import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -29,7 +28,6 @@ import java.util.UUID;
 public class InventoryListener implements Listener {
 
     private final MarktPlace plugin;
-    private final Map<UUID, Object> openGuis = new HashMap<>();
 
     public InventoryListener(MarktPlace plugin) {
         this.plugin = plugin;
@@ -50,21 +48,23 @@ public class InventoryListener implements Listener {
         }
 
         // Check if it's a plugin GUI
-        Object gui = openGuis.get(player.getUniqueId());
+        Object gui = plugin.getGUIManager().getGUI(player.getUniqueId());
         if (gui == null) {
             // Try to determine GUI type by inventory title
             String title = event.getView().getTitle();
             if (title.contains("MarketPlace")) {
                 gui = new MarketplaceGUI(plugin, player);
-                openGuis.put(player.getUniqueId(), gui);
+                plugin.getGUIManager().registerGUI(player.getUniqueId(), gui);
             } else if (title.contains("Black Market")) {
                 gui = new BlackMarketGUI(plugin, player);
-                openGuis.put(player.getUniqueId(), gui);
+                plugin.getGUIManager().registerGUI(player.getUniqueId(), gui);
+            } else if (title.contains("My Items")) {
+                gui = new MyItemsGUI(plugin, player);
+                plugin.getGUIManager().registerGUI(player.getUniqueId(), gui);
             } else if (title.contains("Transaction History")) {
                 gui = new TransactionHistoryGUI(plugin, player);
-                openGuis.put(player.getUniqueId(), gui);
-            } else if (title.contains("Confirm Purchase")) {
-                // Handle confirmation GUI separately
+                plugin.getGUIManager().registerGUI(player.getUniqueId(), gui);
+            } else if (title.contains("Confirm Purchase") || title.contains("§eConfirm Purchase")) {
                 handleConfirmationClick(event, player, clickedItem);
                 return;
             } else {
@@ -79,6 +79,8 @@ public class InventoryListener implements Listener {
             handleMarketplaceClick(event, player, (MarketplaceGUI) gui, clickedItem);
         } else if (gui instanceof BlackMarketGUI) {
             handleBlackMarketClick(event, player, (BlackMarketGUI) gui, clickedItem);
+        } else if (gui instanceof MyItemsGUI) {
+            handleMyItemsClick(event, player, (MyItemsGUI) gui, clickedItem);
         } else if (gui instanceof TransactionHistoryGUI) {
             handleTransactionHistoryClick(event, player, (TransactionHistoryGUI) gui, clickedItem);
         }
@@ -98,8 +100,10 @@ public class InventoryListener implements Listener {
             gui.previousPage();
         } else if (displayName.contains("Close")) {
             player.closeInventory();
-        } else if (displayName.contains("Refresh")) {
-            gui.refresh();
+        } else if (displayName.contains("My Items")) {
+            MyItemsGUI myItemsGUI = new MyItemsGUI(plugin, player);
+            plugin.getGUIManager().registerGUI(player.getUniqueId(), myItemsGUI);
+            myItemsGUI.open();
         } else {
             // Handle item clicks
             MarketItem item = gui.getMarketItemAtSlot(slot);
@@ -123,15 +127,44 @@ public class InventoryListener implements Listener {
             gui.previousPage();
         } else if (displayName.contains("Close")) {
             player.closeInventory();
-        } else if (displayName.contains("Refresh") && player.hasPermission("marketplace.blackmarket.refresh")) {
-            plugin.getBlackMarketManager().forceRefresh();
-            gui.refresh();
-            player.sendMessage(plugin.getConfigManager().getMessage("blackmarket.refreshed"));
+        } else if (displayName.contains("My Items")) {
+            MyItemsGUI myItemsGUI = new MyItemsGUI(plugin, player);
+            plugin.getGUIManager().registerGUI(player.getUniqueId(), myItemsGUI);
+            myItemsGUI.open();
         } else {
             // Handle item clicks
             MarketItem item = gui.getMarketItemAtSlot(slot);
             if (item != null) {
                 handleItemPurchase(player, item, true);
+            }
+        }
+    }
+
+    /**
+     * Handle My Items GUI clicks
+     */
+    private void handleMyItemsClick(InventoryClickEvent event, Player player, MyItemsGUI gui, ItemStack clickedItem) {
+        String displayName = clickedItem.getItemMeta().getDisplayName();
+        int slot = event.getSlot();
+
+        // Handle navigation buttons
+        if (displayName.contains("Next Page")) {
+            gui.nextPage();
+        } else if (displayName.contains("Previous Page")) {
+            gui.previousPage();
+        } else if (displayName.contains("Close")) {
+            player.closeInventory();
+        } else if (displayName.contains("Back")) {
+            // Return to marketplace
+            MarketplaceGUI marketplaceGUI = new MarketplaceGUI(plugin, player);
+            plugin.getGUIManager().registerGUI(player.getUniqueId(), marketplaceGUI);
+            marketplaceGUI.open();
+        } else {
+            // Handle item removal
+            MarketItem item = gui.getMarketItemAtSlot(slot);
+            if (item != null) {
+                gui.removeItem(item);
+                player.sendMessage(plugin.getConfigManager().getMessage("my-items.item-removed"));
             }
         }
     }
@@ -166,7 +199,7 @@ public class InventoryListener implements Listener {
         if (plugin.getConfig().getBoolean("general.confirmation-gui", true)) {
             ConfirmationGUI confirmationGUI = new ConfirmationGUI(plugin, player, item, isBlackMarket);
             confirmationGUI.open();
-            openGuis.put(player.getUniqueId(), confirmationGUI);
+            plugin.getGUIManager().registerGUI(player.getUniqueId(), confirmationGUI);
         } else {
             // Direct purchase
             processPurchase(player, item, isBlackMarket);
@@ -178,25 +211,26 @@ public class InventoryListener implements Listener {
      */
     private void handleConfirmationClick(InventoryClickEvent event, Player player, ItemStack clickedItem) {
         event.setCancelled(true);
-        
-        String displayName = clickedItem.getItemMeta().getDisplayName();
-        
+
+        int slot = event.getSlot();
+
         // Find the confirmation GUI
-        Object gui = openGuis.get(player.getUniqueId());
+        Object gui = plugin.getGUIManager().getGUI(player.getUniqueId());
         if (!(gui instanceof ConfirmationGUI)) {
             return;
         }
-        
+
         ConfirmationGUI confirmationGUI = (ConfirmationGUI) gui;
-        
-        if (displayName.contains("Confirm")) {
+
+        // Check by slot instead of display name to avoid issues with color codes and translations
+        if (slot == 11) { // Confirm button slot
             MarketItem item = confirmationGUI.getMarketItem();
             boolean isBlackMarket = confirmationGUI.isBlackMarket();
-            
+
             player.closeInventory();
             processPurchase(player, item, isBlackMarket);
-            
-        } else if (displayName.contains("Cancel")) {
+
+        } else if (slot == 15) { // Cancel button slot
             player.closeInventory();
         }
     }
@@ -210,7 +244,7 @@ public class InventoryListener implements Listener {
             MarketItem currentItem = isBlackMarket ? 
                 plugin.getMongoManager().getBlackMarketItem(item.getId()) :
                 plugin.getMongoManager().getMarketItem(item.getId());
-            
+
             if (currentItem == null) {
                 player.sendMessage(plugin.getConfigManager().getMessage("marketplace.item-not-found"));
                 return;
@@ -264,9 +298,16 @@ public class InventoryListener implements Listener {
             // Remove item from marketplace
             if (isBlackMarket) {
                 plugin.getMongoManager().removeBlackMarketItem(currentItem.getId());
+                // Auto-refresh black market GUIs
+                plugin.getGUIManager().refreshBlackMarketGUIs();
             } else {
                 plugin.getMongoManager().removeMarketItem(currentItem.getId());
+                // Auto-refresh marketplace GUIs
+                plugin.getGUIManager().refreshMarketplaceGUIs();
             }
+
+            // Auto-refresh My Items GUIs
+            plugin.getGUIManager().refreshMyItemsGUIs();
 
             // Create transaction record
             Transaction transaction = new Transaction(
@@ -338,7 +379,7 @@ public class InventoryListener implements Listener {
     public void onInventoryClose(InventoryCloseEvent event) {
         if (event.getPlayer() instanceof Player) {
             Player player = (Player) event.getPlayer();
-            openGuis.remove(player.getUniqueId());
+            plugin.getGUIManager().unregisterGUI(player.getUniqueId());
         }
     }
 }

@@ -122,6 +122,10 @@ public class SellCommand implements CommandExecutor, TabCompleter {
             // Remove item from player's inventory
             player.getInventory().setItemInMainHand(null);
 
+            // Auto-refresh all marketplace GUIs
+            plugin.getGUIManager().refreshMarketplaceGUIs();
+            plugin.getGUIManager().refreshMyItemsGUIs();
+
             // Update player data
             PlayerData playerData = plugin.getMongoManager().getPlayerData(player.getUniqueId());
             playerData.setPlayerName(player.getName());

@@ -181,4 +181,6 @@ public class MarketItem {
     public void setOriginalPrice(double originalPrice) {
         this.originalPrice = originalPrice;
     }
+
+
 }

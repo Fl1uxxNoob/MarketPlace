@@ -285,6 +285,64 @@ public class MongoManager {
     }
 
     /**
+     * Get all market items by player
+     */
+    public List<MarketItem> getPlayerMarketItems(UUID playerId) {
+        List<MarketItem> items = new ArrayList<>();
+        try {
+            FindIterable<Document> docs = marketItemsCollection.find(Filters.eq("sellerId", playerId.toString()));
+            for (Document doc : docs) {
+                items.add(MarketItem.fromDocument(doc));
+            }
+        } catch (Exception e) {
+            plugin.getLogger().warning("Error getting player market items: " + e.getMessage());
+        }
+        return items;
+    }
+
+    /**
+     * Get all black market items by player
+     */
+    public List<MarketItem> getPlayerBlackMarketItems(UUID playerId) {
+        List<MarketItem> items = new ArrayList<>();
+        try {
+            FindIterable<Document> docs = blackMarketCollection.find(Filters.eq("sellerId", playerId.toString()));
+            for (Document doc : docs) {
+                items.add(MarketItem.fromDocument(doc));
+            }
+        } catch (Exception e) {
+            plugin.getLogger().warning("Error getting player black market items: " + e.getMessage());
+        }
+        return items;
+    }
+
+    /**
+     * Move items from black market back to regular market
+     */
+    public void moveBlackMarketItemsToMarket() {
+        try {
+            // Get all black market items
+            FindIterable<Document> docs = blackMarketCollection.find();
+            
+            for (Document doc : docs) {
+                // Convert back to regular market item
+                MarketItem item = MarketItem.fromDocument(doc);
+                item.setBlackMarket(false);
+                item.setPrice(item.getOriginalPrice()); // Reset to original price
+                
+                // Add to regular market
+                marketItemsCollection.insertOne(item.toDocument());
+            }
+            
+            // Clear black market
+            blackMarketCollection.deleteMany(new Document());
+            
+        } catch (Exception e) {
+            plugin.getLogger().warning("Error moving black market items to market: " + e.getMessage());
+        }
+    }
+
+    /**
      * Check if database is connected
      */
     public boolean isConnected() {

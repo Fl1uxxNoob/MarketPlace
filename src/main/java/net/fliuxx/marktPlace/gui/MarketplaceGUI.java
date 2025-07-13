@@ -104,11 +104,11 @@ public class MarketplaceGUI {
             inventory.setItem(closeConfig.getInt("slot", 49), close);
         }
         
-        // Refresh button
-        ConfigurationSection refreshConfig = guiConfig.getConfigurationSection("items.refresh");
-        if (refreshConfig != null) {
-            ItemStack refresh = createGuiItem(refreshConfig);
-            inventory.setItem(refreshConfig.getInt("slot", 47), refresh);
+        // My Items button
+        ConfigurationSection myItemsConfig = guiConfig.getConfigurationSection("items.my-items");
+        if (myItemsConfig != null) {
+            ItemStack myItems = createGuiItem(myItemsConfig);
+            inventory.setItem(myItemsConfig.getInt("slot", 47), myItems);
         }
     }
 

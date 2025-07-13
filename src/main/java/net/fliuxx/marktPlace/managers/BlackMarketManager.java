@@ -67,6 +67,9 @@ public class BlackMarketManager {
     public void refreshBlackMarket() {
         synchronized (lock) {
             try {
+                // Move unsold black market items back to regular market
+                plugin.getMongoManager().moveBlackMarketItemsToMarket();
+                
                 // Clear existing black market items
                 plugin.getMongoManager().clearBlackMarket();
 
@@ -115,6 +118,11 @@ public class BlackMarketManager {
 
                 lastRefreshTime = System.currentTimeMillis();
                 plugin.getLogger().info("Black market refreshed with " + selectedItems.size() + " items");
+                
+                // Auto-refresh all relevant GUIs
+                plugin.getGUIManager().refreshBlackMarketGUIs();
+                plugin.getGUIManager().refreshMarketplaceGUIs();
+                plugin.getGUIManager().refreshMyItemsGUIs();
 
             } catch (Exception e) {
                 plugin.getLogger().severe("Error refreshing black market: " + e.getMessage());
