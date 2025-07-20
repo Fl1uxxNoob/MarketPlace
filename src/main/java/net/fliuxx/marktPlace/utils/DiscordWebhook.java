@@ -63,11 +63,15 @@ public class DiscordWebhook {
     public void sendPurchaseNotification(String buyerName, String sellerName, String itemName, double price) {
         if (!enabled || webhookUrl.isEmpty()) return;
 
-        String message = plugin.getConfigManager().getMessage("discord.messages.purchase",
-                "player", buyerName,
-                "seller", sellerName,
-                "item", itemName,
-                "price", String.format("%.2f", price));
+        // Get message from config.yml instead of messages.yml
+        String messageTemplate = plugin.getConfig().getString("discord.messages.purchase", 
+            "**{player}** purchased **{item}** for **${price}** from **{seller}**");
+        
+        String message = messageTemplate
+                .replace("{player}", buyerName)
+                .replace("{seller}", sellerName)
+                .replace("{item}", itemName)
+                .replace("{price}", String.format("%.2f", price));
 
         sendWebhook(message, "Purchase", Color.GREEN);
     }
@@ -78,11 +82,15 @@ public class DiscordWebhook {
     public void sendBlackMarketPurchaseNotification(String buyerName, String sellerName, String itemName, double price) {
         if (!enabled || webhookUrl.isEmpty()) return;
 
-        String message = plugin.getConfigManager().getMessage("discord.messages.blackmarket-purchase",
-                "player", buyerName,
-                "seller", sellerName,
-                "item", itemName,
-                "price", String.format("%.2f", price));
+        // Get message from config.yml instead of messages.yml
+        String messageTemplate = plugin.getConfig().getString("discord.messages.blackmarket-purchase", 
+            "**{player}** purchased **{item}** for **${price}** from **{seller}** on the Black Market");
+        
+        String message = messageTemplate
+                .replace("{player}", buyerName)
+                .replace("{seller}", sellerName)
+                .replace("{item}", itemName)
+                .replace("{price}", String.format("%.2f", price));
 
         sendWebhook(message, "Black Market Purchase", Color.RED);
     }

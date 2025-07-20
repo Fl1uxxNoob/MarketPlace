@@ -19,12 +19,17 @@ repositories {
         name = "jitpack.io"
         url = "https://jitpack.io"
     }
+    maven {
+        name = "nexus"
+        url = "https://nexus.hc.to/content/repositories/pub_releases"
+    }
 }
 
 dependencies {
     compileOnly 'org.spigotmc:spigot-api:1.21.4-R0.1-SNAPSHOT'
     implementation 'org.mongodb:mongodb-driver-sync:4.10.1'
     implementation 'org.json:json:20230618'
+    compileOnly 'net.milkbowl.vault:VaultAPI:1.7'
 }
 
 tasks.withType(JavaCompile) {

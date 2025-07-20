@@ -9,6 +9,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.NamespacedKey;
+import org.bukkit.persistence.PersistentDataType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -82,8 +84,10 @@ public class TransactionHistoryGUI {
         if (hasNextPage()) {
             ConfigurationSection nextPageConfig = guiConfig.getConfigurationSection("items.next-page");
             if (nextPageConfig != null) {
+                int slot = nextPageConfig.getInt("slot", 53);
                 ItemStack nextPage = createGuiItem(nextPageConfig);
-                inventory.setItem(nextPageConfig.getInt("slot", 53), nextPage);
+                nextPage = addGuiButtonIdentifier(nextPage, "next-page", slot);
+                inventory.setItem(slot, nextPage);
             }
         }
         
@@ -91,16 +95,20 @@ public class TransactionHistoryGUI {
         if (hasPreviousPage()) {
             ConfigurationSection prevPageConfig = guiConfig.getConfigurationSection("items.previous-page");
             if (prevPageConfig != null) {
+                int slot = prevPageConfig.getInt("slot", 45);
                 ItemStack prevPage = createGuiItem(prevPageConfig);
-                inventory.setItem(prevPageConfig.getInt("slot", 45), prevPage);
+                prevPage = addGuiButtonIdentifier(prevPage, "previous-page", slot);
+                inventory.setItem(slot, prevPage);
             }
         }
         
         // Close button
         ConfigurationSection closeConfig = guiConfig.getConfigurationSection("items.close");
         if (closeConfig != null) {
+            int slot = closeConfig.getInt("slot", 49);
             ItemStack close = createGuiItem(closeConfig);
-            inventory.setItem(closeConfig.getInt("slot", 49), close);
+            close = addGuiButtonIdentifier(close, "close", slot);
+            inventory.setItem(slot, close);
         }
     }
 
@@ -349,5 +357,43 @@ public class TransactionHistoryGUI {
      */
     public Inventory getInventory() {
         return inventory;
+    }
+
+    /**
+     * Check if item at slot is a GUI button
+     */
+    public String getButtonType(int slot) {
+        ItemStack item = inventory.getItem(slot);
+        if (item == null || !item.hasItemMeta()) return null;
+        
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null) return null;
+        
+        NamespacedKey key = new NamespacedKey(plugin, "gui_button_type");
+        if (!meta.getPersistentDataContainer().has(key, PersistentDataType.STRING)) {
+            return null;
+        }
+        
+        return meta.getPersistentDataContainer().get(key, PersistentDataType.STRING);
+    }
+
+    /**
+     * Check if item at slot is a GUI button
+     */
+    public boolean isGuiButton(int slot) {
+        return getButtonType(slot) != null;
+    }
+
+    /**
+     * Add NBT identifier to GUI button
+     */
+    private ItemStack addGuiButtonIdentifier(ItemStack item, String buttonType, int slot) {
+        ItemMeta meta = item.getItemMeta();
+        if (meta != null) {
+            NamespacedKey key = new NamespacedKey(plugin, "gui_button_type");
+            meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, buttonType);
+            item.setItemMeta(meta);
+        }
+        return item;
     }
 }

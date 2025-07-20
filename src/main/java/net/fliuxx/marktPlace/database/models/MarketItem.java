@@ -76,7 +76,7 @@ public class MarketItem {
         long listedAt = doc.getLong("listedAt");
         boolean isBlackMarket = doc.getBoolean("isBlackMarket", false);
         double originalPrice = doc.getDouble("originalPrice") != null ? doc.getDouble("originalPrice") : price;
-        
+
         return new MarketItem(id, sellerId, sellerName, null, itemData, price, 
                             listedAt, isBlackMarket, originalPrice);
     }

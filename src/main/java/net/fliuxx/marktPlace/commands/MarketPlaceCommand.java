@@ -55,6 +55,7 @@ public class MarketPlaceCommand implements CommandExecutor, TabCompleter {
         // Open marketplace GUI
         try {
             MarketplaceGUI gui = new MarketplaceGUI(plugin, player);
+            plugin.getGUIManager().registerGUI(player.getUniqueId(), gui);
             gui.open();
         } catch (Exception e) {
             player.sendMessage(plugin.getConfigManager().getMessage("errors.database-error"));

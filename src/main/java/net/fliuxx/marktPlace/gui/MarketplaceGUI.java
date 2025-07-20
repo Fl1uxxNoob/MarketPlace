@@ -5,14 +5,18 @@ import net.fliuxx.marktPlace.database.models.MarketItem;
 import net.fliuxx.marktPlace.utils.ItemSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataType;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Marketplace GUI
@@ -83,8 +87,10 @@ public class MarketplaceGUI {
         if (hasNextPage()) {
             ConfigurationSection nextPageConfig = guiConfig.getConfigurationSection("items.next-page");
             if (nextPageConfig != null) {
+                int slot = nextPageConfig.getInt("slot", 53);
                 ItemStack nextPage = createGuiItem(nextPageConfig);
-                inventory.setItem(nextPageConfig.getInt("slot", 53), nextPage);
+                nextPage = addGuiButtonIdentifier(nextPage, "next-page", slot);
+                inventory.setItem(slot, nextPage);
             }
         }
         
@@ -92,23 +98,29 @@ public class MarketplaceGUI {
         if (hasPreviousPage()) {
             ConfigurationSection prevPageConfig = guiConfig.getConfigurationSection("items.previous-page");
             if (prevPageConfig != null) {
+                int slot = prevPageConfig.getInt("slot", 45);
                 ItemStack prevPage = createGuiItem(prevPageConfig);
-                inventory.setItem(prevPageConfig.getInt("slot", 45), prevPage);
+                prevPage = addGuiButtonIdentifier(prevPage, "previous-page", slot);
+                inventory.setItem(slot, prevPage);
             }
         }
         
         // Close button
         ConfigurationSection closeConfig = guiConfig.getConfigurationSection("items.close");
         if (closeConfig != null) {
+            int slot = closeConfig.getInt("slot", 49);
             ItemStack close = createGuiItem(closeConfig);
-            inventory.setItem(closeConfig.getInt("slot", 49), close);
+            close = addGuiButtonIdentifier(close, "close", slot);
+            inventory.setItem(slot, close);
         }
         
         // My Items button
         ConfigurationSection myItemsConfig = guiConfig.getConfigurationSection("items.my-items");
         if (myItemsConfig != null) {
+            int slot = myItemsConfig.getInt("slot", 47);
             ItemStack myItems = createGuiItem(myItemsConfig);
-            inventory.setItem(myItemsConfig.getInt("slot", 47), myItems);
+            myItems = addGuiButtonIdentifier(myItems, "my-items", slot);
+            inventory.setItem(slot, myItems);
         }
     }
 
@@ -134,21 +146,38 @@ public class MarketplaceGUI {
         int startIndex = currentPage * itemsPerPage;
         int endIndex = Math.min(startIndex + itemsPerPage, items.size());
         
-        int slot = 0;
+        Set<Integer> reservedSlots = getReservedSlots(guiConfig);
+        int rows = guiConfig.getInt("rows", 6);
+        int maxSlot = rows * 9;
+        
+        int currentSlot = 0;
         for (int i = startIndex; i < endIndex; i++) {
-            // Skip navigation slots
-            while (isNavigationSlot(slot)) {
-                slot++;
-            }
-            
-            if (slot >= 45) break; // Don't go beyond item area
+            // Find next available slot
+            int availableSlot = getNextAvailableSlot(currentSlot, reservedSlots, maxSlot);
+            if (availableSlot == -1) break; // No more available slots
             
             MarketItem item = items.get(i);
             ItemStack displayItem = createMarketItemDisplay(item, guiConfig);
             
-            inventory.setItem(slot, displayItem);
-            slot++;
+            // Add NBT identifier for market items
+            displayItem = addMarketItemIdentifier(displayItem, item.getId());
+            
+            inventory.setItem(availableSlot, displayItem);
+            currentSlot = availableSlot + 1;
         }
+    }
+    
+    /**
+     * Add NBT identifier to market item
+     */
+    private ItemStack addMarketItemIdentifier(ItemStack item, String marketItemId) {
+        ItemMeta meta = item.getItemMeta();
+        if (meta != null) {
+            NamespacedKey key = new NamespacedKey(plugin, "marketplace_item_id");
+            meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, marketItemId);
+            item.setItemMeta(meta);
+        }
+        return item;
     }
 
     /**
@@ -157,6 +186,7 @@ public class MarketplaceGUI {
     private void addPageInfo(ConfigurationSection guiConfig) {
         ConfigurationSection pageInfoConfig = guiConfig.getConfigurationSection("items.page-info");
         if (pageInfoConfig != null) {
+            int slot = pageInfoConfig.getInt("slot", 51);
             ItemStack pageInfo = createGuiItem(pageInfoConfig);
             ItemMeta meta = pageInfo.getItemMeta();
             
@@ -175,7 +205,8 @@ public class MarketplaceGUI {
                 pageInfo.setItemMeta(meta);
             }
             
-            inventory.setItem(pageInfoConfig.getInt("slot", 51), pageInfo);
+            pageInfo = addGuiButtonIdentifier(pageInfo, "page-info", slot);
+            inventory.setItem(slot, pageInfo);
         }
     }
 
@@ -231,7 +262,7 @@ public class MarketplaceGUI {
     }
 
     /**
-     * Create a GUI item from configuration
+     * Create a GUI item from configuration with NBT identifier
      */
     private ItemStack createGuiItem(ConfigurationSection config) {
         Material material = Material.valueOf(config.getString("material", "STONE"));
@@ -272,12 +303,69 @@ public class MarketplaceGUI {
         
         return item;
     }
+    
+    /**
+     * Add GUI button identifier to distinguish from market items
+     */
+    private ItemStack addGuiButtonIdentifier(ItemStack item, String buttonType, int slot) {
+        ItemMeta meta = item.getItemMeta();
+        if (meta != null) {
+            NamespacedKey typeKey = new NamespacedKey(plugin, "gui_button_type");
+            NamespacedKey slotKey = new NamespacedKey(plugin, "gui_button_slot");
+            meta.getPersistentDataContainer().set(typeKey, PersistentDataType.STRING, buttonType);
+            meta.getPersistentDataContainer().set(slotKey, PersistentDataType.INTEGER, slot);
+            item.setItemMeta(meta);
+        }
+        return item;
+    }
 
     /**
-     * Check if slot is a navigation slot
+     * Get all reserved slots (navigation, filler, etc.)
      */
-    private boolean isNavigationSlot(int slot) {
-        return slot >= 45; // Bottom row reserved for navigation
+    private Set<Integer> getReservedSlots(ConfigurationSection guiConfig) {
+        Set<Integer> reservedSlots = new HashSet<>();
+        
+        // Add navigation item slots
+        ConfigurationSection itemsConfig = guiConfig.getConfigurationSection("items");
+        if (itemsConfig != null) {
+            for (String key : itemsConfig.getKeys(false)) {
+                ConfigurationSection itemConfig = itemsConfig.getConfigurationSection(key);
+                if (itemConfig != null) {
+                    int slot = itemConfig.getInt("slot", -1);
+                    if (slot >= 0) {
+                        reservedSlots.add(slot);
+                    }
+                }
+            }
+        }
+        
+        // Add filler slots
+        ConfigurationSection fillerConfig = guiConfig.getConfigurationSection("items.filler");
+        if (fillerConfig != null && fillerConfig.getBoolean("enabled", true)) {
+            List<Integer> fillerSlots = fillerConfig.getIntegerList("slots");
+            reservedSlots.addAll(fillerSlots);
+        }
+        
+        return reservedSlots;
+    }
+    
+    /**
+     * Check if slot is reserved for navigation or filler
+     */
+    private boolean isReservedSlot(int slot, Set<Integer> reservedSlots) {
+        return reservedSlots.contains(slot);
+    }
+    
+    /**
+     * Get next available slot for market items
+     */
+    private int getNextAvailableSlot(int startSlot, Set<Integer> reservedSlots, int maxSlot) {
+        for (int slot = startSlot; slot < maxSlot; slot++) {
+            if (!isReservedSlot(slot, reservedSlots)) {
+                return slot;
+            }
+        }
+        return -1; // No available slot found
     }
 
     /**
@@ -352,27 +440,59 @@ public class MarketplaceGUI {
     }
 
     /**
-     * Get item at slot
+     * Get market item at slot by checking NBT data
      */
     public MarketItem getMarketItemAtSlot(int slot) {
-        if (slot >= 45 || slot < 0) return null;
+        ItemStack item = inventory.getItem(slot);
+        if (item == null || !item.hasItemMeta()) return null;
         
-        int itemIndex = (currentPage * itemsPerPage) + slot;
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null) return null;
         
-        // Count navigation slots before this slot
-        int navigationSlots = 0;
-        for (int i = 0; i < slot; i++) {
-            if (isNavigationSlot(i)) {
-                navigationSlots++;
-            }
+        NamespacedKey key = new NamespacedKey(plugin, "marketplace_item_id");
+        if (!meta.getPersistentDataContainer().has(key, PersistentDataType.STRING)) {
+            return null; // Not a market item
         }
         
-        itemIndex -= navigationSlots;
+        String marketItemId = meta.getPersistentDataContainer().get(key, PersistentDataType.STRING);
+        if (marketItemId == null) return null;
         
-        if (itemIndex >= 0 && itemIndex < items.size()) {
-            return items.get(itemIndex);
+        // Find the market item by ID
+        return items.stream()
+            .filter(marketItem -> marketItem.getId().equals(marketItemId))
+            .findFirst()
+            .orElse(null);
+    }
+    
+    /**
+     * Check if item at slot is a GUI button
+     */
+    public String getButtonType(int slot) {
+        ItemStack item = inventory.getItem(slot);
+        if (item == null || !item.hasItemMeta()) return null;
+        
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null) return null;
+        
+        NamespacedKey key = new NamespacedKey(plugin, "gui_button_type");
+        if (!meta.getPersistentDataContainer().has(key, PersistentDataType.STRING)) {
+            return null;
         }
         
-        return null;
+        return meta.getPersistentDataContainer().get(key, PersistentDataType.STRING);
+    }
+    
+    /**
+     * Check if item at slot is a market item
+     */
+    public boolean isMarketItem(int slot) {
+        return getMarketItemAtSlot(slot) != null;
+    }
+    
+    /**
+     * Check if item at slot is a GUI button
+     */
+    public boolean isGuiButton(int slot) {
+        return getButtonType(slot) != null;
     }
 }

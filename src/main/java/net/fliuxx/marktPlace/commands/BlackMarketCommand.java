@@ -99,6 +99,11 @@ public class BlackMarketCommand implements CommandExecutor, TabCompleter {
             plugin.getBlackMarketManager().forceRefresh();
             player.sendMessage(plugin.getConfigManager().getMessage("blackmarket.refreshed"));
             
+            // Show additional info about timer restart
+            long refreshInterval = plugin.getConfig().getLong("blackmarket.refresh-interval", 86400);
+            String timeUnit = refreshInterval >= 3600 ? (refreshInterval / 3600) + " hours" : (refreshInterval / 60) + " minutes";
+            player.sendMessage("§7Automatic timer restarted - next refresh in §e" + timeUnit);
+            
             // Log the refresh
             plugin.getLogger().info("Black market manually refreshed by " + player.getName());
             

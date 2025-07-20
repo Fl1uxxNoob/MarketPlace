@@ -7,6 +7,7 @@ import net.fliuxx.marktPlace.MarktPlace;
 import net.fliuxx.marktPlace.database.models.MarketItem;
 import net.fliuxx.marktPlace.database.models.PlayerData;
 import net.fliuxx.marktPlace.database.models.Transaction;
+import net.fliuxx.marktPlace.database.models.TimerState;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -30,6 +31,7 @@ public class MongoManager {
     private MongoCollection<Document> marketItemsCollection;
     private MongoCollection<Document> transactionsCollection;
     private MongoCollection<Document> blackMarketCollection;
+    private MongoCollection<Document> timerStateCollection;
 
     public MongoManager(MarktPlace plugin) {
         this.plugin = plugin;
@@ -73,6 +75,7 @@ public class MongoManager {
             marketItemsCollection = database.getCollection("market_items");
             transactionsCollection = database.getCollection("transactions");
             blackMarketCollection = database.getCollection("black_market");
+            timerStateCollection = database.getCollection("timer_state");
             
             // Test connection
             database.runCommand(new Document("ping", 1));
@@ -92,7 +95,7 @@ public class MongoManager {
     public void disconnect() {
         if (mongoClient != null) {
             mongoClient.close();
-            plugin.getLogger().info("Disconnected from MongoDB.");
+            // Removed excessive logging - only log on startup/shutdown
         }
     }
 
@@ -252,6 +255,24 @@ public class MongoManager {
     }
 
     /**
+     * Get black market items (alias for getAllBlackMarketItems)
+     */
+    public List<MarketItem> getBlackMarketItems() {
+        return getAllBlackMarketItems();
+    }
+
+    /**
+     * Move item to black market (removes from market and adds to black market)
+     */
+    public void moveItemToBlackMarket(MarketItem item) {
+        // Remove from regular market
+        removeMarketItem(item.getId());
+        
+        // Add to black market
+        addBlackMarketItem(item);
+    }
+
+    /**
      * Clear all black market items
      */
     public void clearBlackMarket() {
@@ -355,5 +376,42 @@ public class MongoManager {
             plugin.getLogger().warning("Database connection check failed: " + e.getMessage());
         }
         return false;
+    }
+
+    /**
+     * Save timer state to database
+     */
+    public void saveTimerState(TimerState timerState) {
+        try {
+            Document doc = timerState.toDocument();
+            timerStateCollection.replaceOne(
+                Filters.eq("_id", timerState.getId()),
+                doc,
+                new com.mongodb.client.model.ReplaceOptions().upsert(true)
+            );
+            // Removed frequent timer state logging to reduce console spam
+        } catch (Exception e) {
+            plugin.getLogger().warning("Error saving timer state: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Load timer state from database
+     */
+    public TimerState loadTimerState(String timerId) {
+        try {
+            Document doc = timerStateCollection.find(Filters.eq("_id", timerId)).first();
+            if (doc != null) {
+                TimerState state = TimerState.fromDocument(doc);
+                // Only log on first load, not every time
+                return state;
+            }
+        } catch (Exception e) {
+            plugin.getLogger().warning("Error loading timer state: " + e.getMessage());
+        }
+        
+        // Return new timer state if not found
+        // Only log the first time a new timer state is created
+        return new TimerState();
     }
 }

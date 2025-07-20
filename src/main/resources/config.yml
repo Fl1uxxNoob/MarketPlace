@@ -38,6 +38,8 @@ blackmarket:
 economy:
   currency-symbol: "$"
   decimal-places: 2
+  minimum-amount: 0.01
+  maximum-amount: 1000000.0
 
 # General Settings
 general:
@@ -51,3 +53,7 @@ debug:
   enabled: false
   log-database-queries: false
   log-transactions: true
+  gui-debugging: false  # Enable to debug GUI registration and click issues
+
+# Security Settings
+# The anti-theft system is always active and runs silently

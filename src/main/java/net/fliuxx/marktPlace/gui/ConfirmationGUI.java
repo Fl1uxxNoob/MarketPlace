@@ -94,11 +94,17 @@ public class ConfirmationGUI {
         inventory.setItem(15, cancelButton);
         
         // Item info (slot 13)
-        ItemStack itemInfo = item.getItemStack().clone();
+        ItemStack itemInfo;
+        try {
+            itemInfo = ItemSerializer.deserializeItemStack(item.getItemData());
+        } catch (Exception e) {
+            itemInfo = new ItemStack(Material.BARRIER);
+        }
+        
         ItemMeta itemMeta = itemInfo.getItemMeta();
         if (itemMeta != null) {
             List<String> lore = new ArrayList<>();
-            lore.add("§7Price: §6$" + item.getPrice());
+            lore.add("§7Price: §6" + plugin.getEconomyManager().formatMoney(item.getPrice()));
             lore.add("§7Seller: §6" + item.getSellerName());
             lore.add("");
             lore.add("§7Are you sure you want to purchase this item?");
@@ -152,7 +158,13 @@ public class ConfirmationGUI {
     private void addItemInfo(ConfigurationSection guiConfig) {
         ConfigurationSection itemConfig = guiConfig.getConfigurationSection("items.item-info");
         if (itemConfig != null) {
-            ItemStack itemInfo = item.getItemStack().clone();
+            ItemStack itemInfo;
+            try {
+                itemInfo = ItemSerializer.deserializeItemStack(item.getItemData());
+            } catch (Exception e) {
+                itemInfo = new ItemStack(Material.BARRIER);
+            }
+            
             ItemMeta meta = itemInfo.getItemMeta();
             if (meta != null) {
                 // Set display name
@@ -184,12 +196,16 @@ public class ConfirmationGUI {
      */
     private String replacePlaceholders(String text) {
         String itemName = "Unknown Item";
-        if (item.getItemStack() != null && item.getItemStack().hasItemMeta() && 
-            item.getItemStack().getItemMeta().hasDisplayName()) {
-            itemName = item.getItemStack().getItemMeta().getDisplayName();
-        } else if (item.getItemStack() != null) {
-            itemName = item.getItemStack().getType().toString().replace("_", " ").toLowerCase();
-            itemName = itemName.substring(0, 1).toUpperCase() + itemName.substring(1);
+        try {
+            ItemStack itemStack = ItemSerializer.deserializeItemStack(item.getItemData());
+            if (itemStack != null && itemStack.hasItemMeta() && itemStack.getItemMeta().hasDisplayName()) {
+                itemName = itemStack.getItemMeta().getDisplayName();
+            } else if (itemStack != null) {
+                itemName = itemStack.getType().toString().replace("_", " ").toLowerCase();
+                itemName = itemName.substring(0, 1).toUpperCase() + itemName.substring(1);
+            }
+        } catch (Exception e) {
+            itemName = "Unknown Item";
         }
         
         return text
@@ -263,14 +279,20 @@ public class ConfirmationGUI {
      * Open the GUI for the player
      */
     public void open() {
-        player.openInventory(inventory);
-    }
-
-    /**
-     * Get the inventory
-     */
-    public Inventory getInventory() {
-        return inventory;
+        try {
+            // Ensure GUI is properly registered before opening
+            plugin.getGUIManager().registerGUI(player.getUniqueId(), this);
+            
+            // Add debug logging
+            if (plugin.getConfig().getBoolean("debug.gui-debugging", false)) {
+                plugin.getLogger().info("Opening Confirmation GUI for player " + player.getName() + " - Item: " + item.getId());
+            }
+            
+            player.openInventory(inventory);
+        } catch (Exception e) {
+            player.sendMessage(plugin.getConfigManager().getMessage("errors.gui-error"));
+            plugin.getLogger().severe("Error opening Confirmation GUI for " + player.getName() + ": " + e.getMessage());
+        }
     }
 
     /**
@@ -281,9 +303,18 @@ public class ConfirmationGUI {
     }
 
     /**
-     * Check if this is a black market purchase
+     * Check if this is a black market item
      */
     public boolean isBlackMarket() {
         return isBlackMarket;
     }
+
+    /**
+     * Get the inventory
+     */
+    public Inventory getInventory() {
+        return inventory;
+    }
+
+
 }

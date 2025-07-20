@@ -146,7 +146,7 @@ blackmarket:
   
   # Item display configuration
   item-display:
-    name: "&e{item-name} &c(50% OFF!)"
+    name: "&e{item-name} &c({discount}% OFF!)"
     lore:
       - "&7Original Price: &6${original-price}"
       - "&7Sale Price: &c${price}"

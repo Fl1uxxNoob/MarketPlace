@@ -69,7 +69,7 @@ public class GUIManager {
     }
 
     /**
-     * Refresh all "My Items" GUIs
+     * Refresh all my items GUIs
      */
     public void refreshMyItemsGUIs() {
         for (Map.Entry<UUID, Object> entry : openGuis.entrySet()) {
@@ -101,6 +101,51 @@ public class GUIManager {
      */
     public boolean hasGUIOpen(UUID playerId) {
         return openGuis.containsKey(playerId);
+    }
+
+    /**
+     * Switch to a secondary GUI while keeping a fallback to main marketplace
+     */
+    public void openSecondaryGUI(UUID playerId, Object secondaryGUI) {
+        // Register the secondary GUI
+        registerGUI(playerId, secondaryGUI);
+        
+        // Add debug logging
+        if (plugin.getConfig().getBoolean("debug.gui-debugging", false)) {
+            plugin.getLogger().info("Opening secondary GUI for player " + playerId + " - GUI type: " + secondaryGUI.getClass().getSimpleName());
+        }
+    }
+
+    /**
+     * Get the appropriate GUI type for a player based on their current state
+     */
+    public Object getOrCreateGUI(UUID playerId, Player player, String preferredType) {
+        Object existingGUI = getGUI(playerId);
+        
+        // If no GUI exists or wrong type, create appropriate one
+        if (existingGUI == null || !existingGUI.getClass().getSimpleName().toLowerCase().contains(preferredType.toLowerCase())) {
+            Object newGUI;
+            
+            switch (preferredType.toLowerCase()) {
+                case "marketplace":
+                    newGUI = new MarketplaceGUI(plugin, player);
+                    break;
+                case "blackmarket":
+                    newGUI = new BlackMarketGUI(plugin, player);
+                    break;
+                case "myitems":
+                    newGUI = new MyItemsGUI(plugin, player);
+                    break;
+                default:
+                    newGUI = new MarketplaceGUI(plugin, player); // Default fallback
+                    break;
+            }
+            
+            registerGUI(playerId, newGUI);
+            return newGUI;
+        }
+        
+        return existingGUI;
     }
 
     /**

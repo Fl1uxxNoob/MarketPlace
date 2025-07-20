@@ -75,12 +75,14 @@ public class MarktPlace extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        if (mongoManager != null) {
-            mongoManager.disconnect();
-        }
-        
+        // Stop black market timer and save state first
         if (blackMarketManager != null) {
             blackMarketManager.stopRefreshTask();
+        }
+        
+        // Then disconnect from MongoDB
+        if (mongoManager != null) {
+            mongoManager.disconnect();
         }
         
         getLogger().info("MarketPlace plugin has been disabled!");
@@ -158,5 +160,9 @@ public class MarktPlace extends JavaPlugin {
         if (!mongoManager.connect()) {
             getLogger().severe("Failed to reconnect to MongoDB after config reload!");
         }
+        
+        // Reload black market refresh task to apply new auto-refresh settings
+        blackMarketManager.reloadRefreshTask();
+        getLogger().info("Black market refresh task reloaded after config reload");
     }
 }
