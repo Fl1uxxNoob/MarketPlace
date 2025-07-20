@@ -43,15 +43,17 @@ public class TransactionHistoryGUI {
      */
     private void createInventory() {
         ConfigurationSection guiConfig = plugin.getConfigManager().getGuiConfig().getConfigurationSection("transactions");
-        
+
         String title = guiConfig.getString("title", "&9Transaction History - Page {page}");
         title = title.replace("{page}", String.valueOf(currentPage + 1));
+        title = title.replace("{total}", String.valueOf(getTotalPages()));
         title = title.replace('&', '§');
-        
+
         int rows = guiConfig.getInt("rows", 6);
-        
+
+        // Always create a new inventory with the updated title
         inventory = Bukkit.createInventory(null, rows * 9, title);
-        
+
         populateInventory();
     }
 
@@ -133,21 +135,33 @@ public class TransactionHistoryGUI {
     private void addTransactionItems(ConfigurationSection guiConfig) {
         int startIndex = currentPage * itemsPerPage;
         int endIndex = Math.min(startIndex + itemsPerPage, transactions.size());
-        
+
+        // Debug logging
+        if (plugin.getConfig().getBoolean("debug.gui-debugging", false)) {
+            plugin.getLogger().info("TransactionHistory addTransactionItems() - Player: " + player.getName() +
+                    ", Page: " + currentPage + ", StartIndex: " + startIndex +
+                    ", EndIndex: " + endIndex + ", Total transactions: " + transactions.size());
+        }
+
         int slot = 0;
         for (int i = startIndex; i < endIndex; i++) {
             // Skip navigation slots
             while (isNavigationSlot(slot)) {
                 slot++;
             }
-            
+
             if (slot >= 45) break; // Don't go beyond item area
-            
+
             Transaction transaction = transactions.get(i);
             ItemStack displayItem = createTransactionDisplay(transaction, guiConfig);
-            
+
             inventory.setItem(slot, displayItem);
             slot++;
+        }
+
+        // Debug logging
+        if (plugin.getConfig().getBoolean("debug.gui-debugging", false)) {
+            plugin.getLogger().info("TransactionHistory - Added " + (endIndex - startIndex) + " items to page " + currentPage);
         }
     }
 
@@ -315,7 +329,20 @@ public class TransactionHistoryGUI {
     public void nextPage() {
         if (hasNextPage()) {
             currentPage++;
+
+            // Debug logging
+            if (plugin.getConfig().getBoolean("debug.gui-debugging", false)) {
+                plugin.getLogger().info("TransactionHistory nextPage() - Player: " + player.getName() +
+                        ", New page: " + currentPage + ", Total transactions: " + transactions.size());
+            }
+
             refresh();
+        } else {
+            // Debug logging
+            if (plugin.getConfig().getBoolean("debug.gui-debugging", false)) {
+                plugin.getLogger().info("TransactionHistory nextPage() - No next page available - Player: " + player.getName() +
+                        ", Current page: " + currentPage + ", Total transactions: " + transactions.size());
+            }
         }
     }
 
@@ -325,7 +352,20 @@ public class TransactionHistoryGUI {
     public void previousPage() {
         if (hasPreviousPage()) {
             currentPage--;
+
+            // Debug logging
+            if (plugin.getConfig().getBoolean("debug.gui-debugging", false)) {
+                plugin.getLogger().info("TransactionHistory previousPage() - Player: " + player.getName() +
+                        ", New page: " + currentPage + ", Total transactions: " + transactions.size());
+            }
+
             refresh();
+        } else {
+            // Debug logging
+            if (plugin.getConfig().getBoolean("debug.gui-debugging", false)) {
+                plugin.getLogger().info("TransactionHistory previousPage() - No previous page available - Player: " + player.getName() +
+                        ", Current page: " + currentPage + ", Total transactions: " + transactions.size());
+            }
         }
     }
 
@@ -333,16 +373,56 @@ public class TransactionHistoryGUI {
      * Refresh the GUI
      */
     public void refresh() {
-        transactions.clear();
-        transactions.addAll(plugin.getMongoManager().getTransactionsByPlayer(player.getUniqueId()));
-        
-        // Adjust current page if necessary
-        int totalPages = getTotalPages();
-        if (currentPage >= totalPages && totalPages > 0) {
-            currentPage = totalPages - 1;
+        // Debug logging
+        if (plugin.getConfig().getBoolean("debug.gui-debugging", false)) {
+            plugin.getLogger().info("TransactionHistory refresh() - Player: " + player.getName() +
+                    ", Current page: " + currentPage + ", Old transactions size: " + transactions.size());
         }
-        
-        populateInventory();
+
+        // Get fresh transaction data
+        List<Transaction> freshTransactions = plugin.getMongoManager().getTransactionsByPlayer(player.getUniqueId());
+
+        // Update transactions list
+        transactions.clear();
+        transactions.addAll(freshTransactions);
+
+        // Debug logging
+        if (plugin.getConfig().getBoolean("debug.gui-debugging", false)) {
+            plugin.getLogger().info("TransactionHistory refresh() - Player: " + player.getName() +
+                    ", New transactions size: " + transactions.size());
+        }
+
+        // Adjust current page if necessary (only if we have transactions)
+        if (!transactions.isEmpty()) {
+            int totalPages = getTotalPages();
+            if (currentPage >= totalPages) {
+                currentPage = Math.max(0, totalPages - 1);
+            }
+        } else {
+            currentPage = 0;
+        }
+
+        // Debug logging
+        if (plugin.getConfig().getBoolean("debug.gui-debugging", false)) {
+            plugin.getLogger().info("TransactionHistory refresh() - Player: " + player.getName() +
+                    ", Final page: " + currentPage + ", Total pages: " + getTotalPages());
+        }
+
+        // Recreate inventory with updated title
+        createInventory();
+
+        // Re-open the inventory for the player to see the changes
+        if (player.isOnline()) {
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                if (player.isOnline() && plugin.getGUIManager().getGUI(player.getUniqueId()) instanceof TransactionHistoryGUI) {
+                    player.openInventory(inventory);
+
+                    if (plugin.getConfig().getBoolean("debug.gui-debugging", false)) {
+                        plugin.getLogger().info("TransactionHistory - Reopened inventory for player: " + player.getName());
+                    }
+                }
+            });
+        }
     }
 
     /**
