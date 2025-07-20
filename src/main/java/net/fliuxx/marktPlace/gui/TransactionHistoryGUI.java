@@ -306,14 +306,31 @@ public class TransactionHistoryGUI {
      * Check if there's a next page
      */
     private boolean hasNextPage() {
-        return (currentPage + 1) * itemsPerPage < transactions.size();
+        boolean result = (currentPage + 1) * itemsPerPage < transactions.size();
+
+        // Debug logging
+        if (plugin.getConfig().getBoolean("debug.gui-debugging", false)) {
+            plugin.getLogger().info("hasNextPage() - Player: " + player.getName() +
+                    ", currentPage: " + currentPage + ", itemsPerPage: " + itemsPerPage +
+                    ", transactions.size(): " + transactions.size() + ", result: " + result);
+        }
+
+        return result;
     }
 
     /**
      * Check if there's a previous page
      */
     private boolean hasPreviousPage() {
-        return currentPage > 0;
+        boolean result = currentPage > 0;
+
+        // Debug logging
+        if (plugin.getConfig().getBoolean("debug.gui-debugging", false)) {
+            plugin.getLogger().info("hasPreviousPage() - Player: " + player.getName() +
+                    ", currentPage: " + currentPage + ", result: " + result);
+        }
+
+        return result;
     }
 
     /**
@@ -350,13 +367,24 @@ public class TransactionHistoryGUI {
      * Go to previous page
      */
     public void previousPage() {
+        if (plugin.getConfig().getBoolean("debug.gui-debugging", false)) {
+            plugin.getLogger().info("previousPage() called - Player: " + player.getName() +
+                    ", Current page: " + currentPage + ", Has previous: " + hasPreviousPage());
+        }
+
         if (hasPreviousPage()) {
+            int oldPage = currentPage;
             currentPage--;
+
+            // Ensure currentPage doesn't go negative
+            if (currentPage < 0) {
+                currentPage = 0;
+            }
 
             // Debug logging
             if (plugin.getConfig().getBoolean("debug.gui-debugging", false)) {
                 plugin.getLogger().info("TransactionHistory previousPage() - Player: " + player.getName() +
-                        ", New page: " + currentPage + ", Total transactions: " + transactions.size());
+                        ", Old page: " + oldPage + ", New page: " + currentPage + ", Total transactions: " + transactions.size());
             }
 
             refresh();
@@ -444,17 +472,58 @@ public class TransactionHistoryGUI {
      */
     public String getButtonType(int slot) {
         ItemStack item = inventory.getItem(slot);
-        if (item == null || !item.hasItemMeta()) return null;
-        
-        ItemMeta meta = item.getItemMeta();
-        if (meta == null) return null;
-        
-        NamespacedKey key = new NamespacedKey(plugin, "gui_button_type");
-        if (!meta.getPersistentDataContainer().has(key, PersistentDataType.STRING)) {
+        if (item == null || !item.hasItemMeta()) {
+            if (plugin.getConfig().getBoolean("debug.gui-debugging", false)) {
+                plugin.getLogger().info("getButtonType() - No item or meta at slot " + slot);
+            }
             return null;
         }
-        
-        return meta.getPersistentDataContainer().get(key, PersistentDataType.STRING);
+
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null) {
+            if (plugin.getConfig().getBoolean("debug.gui-debugging", false)) {
+                plugin.getLogger().info("getButtonType() - No meta at slot " + slot);
+            }
+            return null;
+        }
+
+        NamespacedKey key = new NamespacedKey(plugin, "gui_button_type");
+        if (!meta.getPersistentDataContainer().has(key, PersistentDataType.STRING)) {
+            // Fallback: check by slot position for common navigation buttons
+            ConfigurationSection guiConfig = plugin.getConfigManager().getGuiConfig().getConfigurationSection("transactions");
+            if (guiConfig != null) {
+                if (slot == guiConfig.getInt("items.previous-page.slot", 45)) {
+                    if (plugin.getConfig().getBoolean("debug.gui-debugging", false)) {
+                        plugin.getLogger().info("getButtonType() - Fallback detected previous-page at slot " + slot);
+                    }
+                    return "previous-page";
+                }
+                if (slot == guiConfig.getInt("items.next-page.slot", 53)) {
+                    if (plugin.getConfig().getBoolean("debug.gui-debugging", false)) {
+                        plugin.getLogger().info("getButtonType() - Fallback detected next-page at slot " + slot);
+                    }
+                    return "next-page";
+                }
+                if (slot == guiConfig.getInt("items.close.slot", 49)) {
+                    if (plugin.getConfig().getBoolean("debug.gui-debugging", false)) {
+                        plugin.getLogger().info("getButtonType() - Fallback detected close at slot " + slot);
+                    }
+                    return "close";
+                }
+            }
+
+            if (plugin.getConfig().getBoolean("debug.gui-debugging", false)) {
+                plugin.getLogger().info("getButtonType() - No NBT data found at slot " + slot);
+            }
+            return null;
+        }
+
+        String buttonType = meta.getPersistentDataContainer().get(key, PersistentDataType.STRING);
+        if (plugin.getConfig().getBoolean("debug.gui-debugging", false)) {
+            plugin.getLogger().info("getButtonType() - Found button type '" + buttonType + "' at slot " + slot);
+        }
+
+        return buttonType;
     }
 
     /**
