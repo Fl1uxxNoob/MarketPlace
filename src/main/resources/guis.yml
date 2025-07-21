@@ -339,3 +339,72 @@ my-items:
       material: GRAY_STAINED_GLASS_PANE
       name: " "
       slots: [46, 47, 51, 52]
+
+# Admin GUI Configuration
+admin:
+  title: "&cAdmin Panel - Page {page}"
+  rows: 6
+  items:
+    # Navigation items
+    next-page:
+      slot: 53
+      material: ARROW
+      name: "&aNext Page"
+      lore:
+        - "&7Click to go to the next page"
+      custom-model-data: 0
+      glow: false
+    
+    previous-page:
+      slot: 45
+      material: ARROW
+      name: "&aPrevious Page"
+      lore:
+        - "&7Click to go to the previous page"
+      custom-model-data: 0
+      glow: false
+    
+    close:
+      slot: 49
+      material: BARRIER
+      name: "&cClose"
+      lore:
+        - "&7Click to close the admin panel"
+      custom-model-data: 0
+      glow: false
+    
+    page-info:
+      slot: 51
+      material: BOOK
+      name: "&7Admin Panel Information"
+      lore:
+        - "&7Current Page: &e{current}"
+        - "&7Total Pages: &e{total}"
+        - "&7Total Items: &e{items}"
+        - ""
+        - "&7&lAdmin Controls:"
+        - "&7Left Click: &aReturn item to seller"
+        - "&7Right Click: &cConfiscate item"
+      custom-model-data: 0
+      glow: false
+    
+    # Filler items
+    filler:
+      enabled: true
+      material: RED_STAINED_GLASS_PANE
+      name: " "
+      slots: [46, 47, 48, 50, 52]
+  
+  # Item display configuration
+  item-display:
+    name: "&e{item-name} &7(ID: {item-id})"
+    lore:
+      - "&7Price: &6${price}"
+      - "&7Seller: &6{seller}"
+      - ""
+      - "&c&lAdmin Controls:"
+      - "&7Left Click: &aReturn to seller"
+      - "&7Right Click: &cConfiscate item"
+      - ""
+      - "&7Item ID: &e{item-id}"
+    glow: false

@@ -7,6 +7,7 @@ no-permission: "&cYou don't have permission to use this command!"
 player-only: "&cThis command can only be used by players!"
 reload-success: "&aConfiguration reloaded successfully!"
 unknown-command: "&cUnknown command. Use /marketplace help for help."
+player-not-found: "&cPlayer '{player}' not found or has never joined the server!"
 
 # Economy Messages
 insufficient-funds: "&cYou don't have enough money! Required: &6${price}"
@@ -90,3 +91,11 @@ time:
   minutes: "{minutes}m"
   seconds: "{seconds}s"
   format: "{days} {hours} {minutes} {seconds}"
+
+# Admin Messages
+admin:
+  gui-opened: "&aAdmin panel opened!"
+  item-confiscated: "&cItem '{item}' confiscated from {seller}!"
+  item-returned: "&aItem '{item}' returned to {seller}!"
+  item-returned-to-you: "&aAn admin has returned your marketplace item to you!"
+  viewing-transactions: "&7Now viewing transaction history for: &e{player}"

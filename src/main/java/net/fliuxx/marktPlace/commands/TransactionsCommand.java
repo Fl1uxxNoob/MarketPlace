@@ -2,6 +2,8 @@ package net.fliuxx.marktPlace.commands;
 
 import net.fliuxx.marktPlace.MarktPlace;
 import net.fliuxx.marktPlace.gui.TransactionHistoryGUI;
+import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -49,6 +51,10 @@ public class TransactionsCommand implements CommandExecutor, TabCompleter {
                 case "help":
                     return handleHelp(player);
                 default:
+                    // Check if this is a player name for viewing other's transactions
+                    if (player.hasPermission("marketplace.history.other")) {
+                        return handlePlayerTransactions(player, args[0]);
+                    }
                     player.sendMessage(plugin.getConfigManager().getMessage("unknown-command"));
                     return true;
             }
@@ -111,6 +117,35 @@ public class TransactionsCommand implements CommandExecutor, TabCompleter {
     }
 
     /**
+     * Handle viewing another player's transactions
+     */
+    private boolean handlePlayerTransactions(Player player, String targetPlayerName) {
+        // Try to get the target player (online or offline)
+        OfflinePlayer targetPlayer = Bukkit.getOfflinePlayer(targetPlayerName);
+        
+        // Check if the player has ever joined the server
+        if (!targetPlayer.hasPlayedBefore() && !targetPlayer.isOnline()) {
+            player.sendMessage(plugin.getConfigManager().getMessage("player-not-found", "player", targetPlayerName));
+            return true;
+        }
+        
+        // Open transaction history GUI for the target player
+        try {
+            TransactionHistoryGUI gui = new TransactionHistoryGUI(plugin, player, targetPlayer);
+            plugin.getGUIManager().registerGUI(player.getUniqueId(), gui);
+            gui.open();
+            
+            // Send message to admin about whose transactions they're viewing
+            player.sendMessage(plugin.getConfigManager().getMessage("admin.viewing-transactions", "player", targetPlayer.getName()));
+        } catch (Exception e) {
+            player.sendMessage(plugin.getConfigManager().getMessage("errors.database-error"));
+            plugin.getLogger().severe("Error opening transaction history GUI for " + targetPlayerName + " (viewed by " + player.getName() + "): " + e.getMessage());
+        }
+        
+        return true;
+    }
+
+    /**
      * Handle help subcommand
      */
     private boolean handleHelp(Player player) {
@@ -119,6 +154,10 @@ public class TransactionsCommand implements CommandExecutor, TabCompleter {
         player.sendMessage(prefix + "§9Transaction History Help:");
         player.sendMessage("§7/transactions §8- §eView transaction history");
         player.sendMessage("§7/transactions stats §8- §eView your statistics");
+        
+        if (player.hasPermission("marketplace.history.other")) {
+            player.sendMessage("§7/transactions <player> §8- §eView another player's transactions");
+        }
         
         if (player.hasPermission("marketplace.admin.clear")) {
             player.sendMessage("§7/transactions clear §8- §eClear transaction history");

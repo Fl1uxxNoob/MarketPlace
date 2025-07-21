@@ -103,9 +103,11 @@ public class BlackMarketManager {
                 nextRefreshTime = actualRefreshTime + refreshIntervalMs;
                 saveTimerState();
 
-                // Broadcast refresh message
-                String message = plugin.getConfigManager().getMessage("blackmarket.auto-refresh");
-                Bukkit.broadcastMessage(message);
+                // Broadcast refresh message if enabled
+                if (plugin.getConfig().getBoolean("blackmarket.broadcast-refresh", true)) {
+                    String message = plugin.getConfigManager().getMessage("blackmarket.auto-refresh");
+                    Bukkit.broadcastMessage(message);
+                }
             }
         }.runTaskTimer(plugin, initialDelay, intervalTicks);
 

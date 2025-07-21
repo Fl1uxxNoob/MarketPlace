@@ -4,6 +4,7 @@ import net.fliuxx.marktPlace.MarktPlace;
 import net.fliuxx.marktPlace.database.models.Transaction;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
@@ -23,6 +24,7 @@ public class TransactionHistoryGUI {
 
     private final MarktPlace plugin;
     private final Player player;
+    private final OfflinePlayer targetPlayer;
     private final List<Transaction> transactions;
     private final int itemsPerPage;
     private int currentPage;
@@ -31,7 +33,19 @@ public class TransactionHistoryGUI {
     public TransactionHistoryGUI(MarktPlace plugin, Player player) {
         this.plugin = plugin;
         this.player = player;
+        this.targetPlayer = player; // Viewing own transactions
         this.transactions = plugin.getMongoManager().getTransactionsByPlayer(player.getUniqueId());
+        this.itemsPerPage = 45; // 9x5 grid for items
+        this.currentPage = 0;
+        
+        createInventory();
+    }
+
+    public TransactionHistoryGUI(MarktPlace plugin, Player player, OfflinePlayer targetPlayer) {
+        this.plugin = plugin;
+        this.player = player;
+        this.targetPlayer = targetPlayer;
+        this.transactions = plugin.getMongoManager().getTransactionsByPlayer(targetPlayer.getUniqueId());
         this.itemsPerPage = 45; // 9x5 grid for items
         this.currentPage = 0;
         
@@ -47,6 +61,12 @@ public class TransactionHistoryGUI {
         String title = guiConfig.getString("title", "&9Transaction History - Page {page}");
         title = title.replace("{page}", String.valueOf(currentPage + 1));
         title = title.replace("{total}", String.valueOf(getTotalPages()));
+        
+        // If viewing another player's transactions, add their name to the title
+        if (!targetPlayer.getUniqueId().equals(player.getUniqueId())) {
+            title = title.replace("Transaction History", targetPlayer.getName() + "'s Transactions");
+        }
+        
         title = title.replace('&', '§');
 
         int rows = guiConfig.getInt("rows", 6);
@@ -408,7 +428,7 @@ public class TransactionHistoryGUI {
         }
 
         // Get fresh transaction data
-        List<Transaction> freshTransactions = plugin.getMongoManager().getTransactionsByPlayer(player.getUniqueId());
+        List<Transaction> freshTransactions = plugin.getMongoManager().getTransactionsByPlayer(targetPlayer.getUniqueId());
 
         // Update transactions list
         transactions.clear();
@@ -461,6 +481,13 @@ public class TransactionHistoryGUI {
     }
 
     /**
+     * Check if the current viewer is viewing another player's transactions
+     */
+    public boolean isViewingOtherPlayer() {
+        return !targetPlayer.getUniqueId().equals(player.getUniqueId());
+    }
+
+    /**
      * Get the inventory
      */
     public Inventory getInventory() {
@@ -487,7 +514,7 @@ public class TransactionHistoryGUI {
             return null;
         }
 
-        NamespacedKey key = new NamespacedKey(plugin, "gui_button_type");
+        NamespacedKey key = new NamespacedKey(plugin, "gui-button");
         if (!meta.getPersistentDataContainer().has(key, PersistentDataType.STRING)) {
             // Fallback: check by slot position for common navigation buttons
             ConfigurationSection guiConfig = plugin.getConfigManager().getGuiConfig().getConfigurationSection("transactions");
@@ -539,8 +566,12 @@ public class TransactionHistoryGUI {
     private ItemStack addGuiButtonIdentifier(ItemStack item, String buttonType, int slot) {
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            NamespacedKey key = new NamespacedKey(plugin, "gui_button_type");
+            NamespacedKey key = new NamespacedKey(plugin, "gui-button");
             meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, buttonType);
+            
+            NamespacedKey slotKey = new NamespacedKey(plugin, "gui-slot");
+            meta.getPersistentDataContainer().set(slotKey, PersistentDataType.INTEGER, slot);
+            
             item.setItemMeta(meta);
         }
         return item;

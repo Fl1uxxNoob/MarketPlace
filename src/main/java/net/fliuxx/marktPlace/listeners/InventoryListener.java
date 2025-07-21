@@ -9,6 +9,7 @@ import net.fliuxx.marktPlace.gui.ConfirmationGUI;
 import net.fliuxx.marktPlace.gui.MarketplaceGUI;
 import net.fliuxx.marktPlace.gui.MyItemsGUI;
 import net.fliuxx.marktPlace.gui.TransactionHistoryGUI;
+import net.fliuxx.marktPlace.gui.AdminGUI;
 import net.fliuxx.marktPlace.utils.ItemSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -103,6 +104,8 @@ public class InventoryListener implements Listener {
             handleMyItemsClick(event, player, (MyItemsGUI) gui, clickedItem);
         } else if (gui instanceof TransactionHistoryGUI) {
             handleTransactionHistoryClick(event, player, (TransactionHistoryGUI) gui, clickedItem);
+        } else if (gui instanceof AdminGUI) {
+            handleAdminClick(event, player, (AdminGUI) gui, clickedItem);
         }
     }
     
@@ -118,12 +121,16 @@ public class InventoryListener implements Listener {
                title.contains("Black Market") || 
                title.contains("My Items") || 
                title.contains("Transaction History") ||
+               title.contains("Transactions") ||
                title.contains("Confirm Purchase") || 
                title.contains("§eConfirm Purchase") ||
                title.contains("§6MarketPlace") ||
                title.contains("§4Black Market") ||
                title.contains("§6My Items") ||
-               title.contains("§7Transaction History");
+               title.contains("§7Transaction History") ||
+               title.contains("§9Transaction History") ||
+               title.contains("Admin Panel") ||
+               title.contains("§cAdmin Panel");
     }
     
     /**
@@ -166,6 +173,19 @@ public class InventoryListener implements Listener {
             return true; // Player has item on cursor trying to place it
         }
         
+        // Block unknown click types that might be exploits
+        if (clickType == ClickType.UNKNOWN) {
+            return true; // Unknown click types could be exploits
+        }
+        
+        // SPECIAL HANDLING: For Transaction History GUIs, block everything except navigation
+        String title = event.getView().getTitle();
+        if (title.contains("Transaction History") || title.contains("Transactions")) {
+            // Transaction history is read-only except for navigation buttons
+            // Let the specific handler deal with button detection
+            return false; // Let the handler deal with it
+        }
+        
         // Only block pickup attempts when player is trying to steal items
         // Normal left-click for purchasing/navigation should be allowed
         if (clickType == ClickType.LEFT || clickType == ClickType.RIGHT) {
@@ -201,6 +221,8 @@ public class InventoryListener implements Listener {
             return new MyItemsGUI(plugin, player);
         } else if (title.contains("Transaction History")) {
             return new TransactionHistoryGUI(plugin, player);
+        } else if (title.contains("Admin Panel")) {
+            return new AdminGUI(plugin, player);
         }
         return null;
     }
@@ -353,14 +375,31 @@ public class InventoryListener implements Listener {
     private void handleTransactionHistoryClick(InventoryClickEvent event, Player player, TransactionHistoryGUI gui, ItemStack clickedItem) {
         int slot = event.getSlot();
 
-        // Check if this is a GUI button using NBT
+        // ALWAYS cancel the event first - transaction history is read-only
+        event.setCancelled(true);
+        
+        // Clear cursor to prevent any item duplication attempts
+        if (event.getCursor() != null && !event.getCursor().getType().isAir()) {
+            event.setCursor(null);
+        }
+        
+        // Update inventory to ensure consistency
+        player.updateInventory();
+
+        // Only allow navigation button clicks
         String buttonType = gui.getButtonType(slot);
         if (buttonType != null) {
             switch (buttonType) {
                 case "next-page":
+                    if (plugin.getConfig().getBoolean("debug.gui-debugging", false)) {
+                        plugin.getLogger().info("Transaction history next page clicked by " + player.getName());
+                    }
                     gui.nextPage();
                     break;
                 case "previous-page":
+                    if (plugin.getConfig().getBoolean("debug.gui-debugging", false)) {
+                        plugin.getLogger().info("Transaction history previous page clicked by " + player.getName());
+                    }
                     gui.previousPage();
                     break;
                 case "close":
@@ -369,9 +408,14 @@ public class InventoryListener implements Listener {
                 case "page-info":
                     // Do nothing for page info button
                     break;
+                default:
+                    // Unknown button type - ignore
+                    break;
             }
         }
-        // Transaction history items are read-only, no item clicks to handle
+        
+        // All other clicks are completely blocked for security
+        // Transaction history is purely informational and read-only
     }
 
     /**
@@ -714,6 +758,46 @@ public class InventoryListener implements Listener {
         if (isMarketplaceInventory(event.getDestination().getType().name()) || 
             isMarketplaceInventory(event.getSource().getType().name())) {
             event.setCancelled(true);
+        }
+    }
+    
+    /**
+     * Handle admin GUI clicks
+     */
+    private void handleAdminClick(InventoryClickEvent event, Player player, AdminGUI gui, ItemStack clickedItem) {
+        int slot = event.getSlot();
+
+        // Check if this is a GUI button using NBT
+        String buttonType = gui.getButtonType(slot);
+        if (buttonType != null) {
+            switch (buttonType) {
+                case "next-page":
+                    gui.nextPage();
+                    break;
+                case "previous-page":
+                    gui.previousPage();
+                    break;
+                case "close":
+                    player.closeInventory();
+                    break;
+                case "page-info":
+                    // Do nothing for page info button
+                    break;
+            }
+        } else {
+            // Handle market item clicks
+            String itemId = gui.getMarketItemId(slot);
+            if (itemId != null) {
+                ClickType clickType = event.getClick();
+                
+                if (clickType == ClickType.LEFT) {
+                    // Left click: Return item to seller
+                    gui.returnItem(itemId);
+                } else if (clickType == ClickType.RIGHT) {
+                    // Right click: Confiscate item
+                    gui.confiscateItem(itemId);
+                }
+            }
         }
     }
 

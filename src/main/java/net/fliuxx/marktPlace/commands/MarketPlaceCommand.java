@@ -2,6 +2,7 @@ package net.fliuxx.marktPlace.commands;
 
 import net.fliuxx.marktPlace.MarktPlace;
 import net.fliuxx.marktPlace.gui.MarketplaceGUI;
+import net.fliuxx.marktPlace.gui.AdminGUI;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -42,6 +43,8 @@ public class MarketPlaceCommand implements CommandExecutor, TabCompleter {
         // Handle subcommands
         if (args.length > 0) {
             switch (args[0].toLowerCase()) {
+                case "admin":
+                    return handleAdmin(player);
                 case "reload":
                     return handleReload(player);
                 case "help":
@@ -60,6 +63,27 @@ public class MarketPlaceCommand implements CommandExecutor, TabCompleter {
         } catch (Exception e) {
             player.sendMessage(plugin.getConfigManager().getMessage("errors.database-error"));
             plugin.getLogger().severe("Error opening marketplace GUI for " + player.getName() + ": " + e.getMessage());
+        }
+
+        return true;
+    }
+
+    /**
+     * Handle admin subcommand
+     */
+    private boolean handleAdmin(Player player) {
+        if (!player.hasPermission("marketplace.admin")) {
+            player.sendMessage(plugin.getConfigManager().getMessage("no-permission"));
+            return true;
+        }
+
+        try {
+            AdminGUI gui = new AdminGUI(plugin, player);
+            plugin.getGUIManager().registerGUI(player.getUniqueId(), gui);
+            gui.open();
+        } catch (Exception e) {
+            player.sendMessage(plugin.getConfigManager().getMessage("errors.database-error"));
+            plugin.getLogger().severe("Error opening admin GUI for " + player.getName() + ": " + e.getMessage());
         }
 
         return true;
@@ -101,6 +125,10 @@ public class MarketPlaceCommand implements CommandExecutor, TabCompleter {
             player.sendMessage("§7/blackmarketrefresh §8- §eRefresh black market");
         }
         
+        if (player.hasPermission("marketplace.admin")) {
+            player.sendMessage("§7/marketplace admin §8- §eOpen admin panel");
+        }
+        
         if (player.hasPermission("marketplace.admin.reload")) {
             player.sendMessage("§7/marketplace reload §8- §eReload configuration");
         }
@@ -113,6 +141,9 @@ public class MarketPlaceCommand implements CommandExecutor, TabCompleter {
         List<String> completions = new ArrayList<>();
 
         if (args.length == 1) {
+            if (sender.hasPermission("marketplace.admin")) {
+                completions.add("admin");
+            }
             if (sender.hasPermission("marketplace.admin.reload")) {
                 completions.add("reload");
             }
